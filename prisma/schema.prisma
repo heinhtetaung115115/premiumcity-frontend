@@ -1,0 +1,142 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+//
+// Enums
+//
+enum DeliveryType {
+  CODE     // single redeem code/key
+  ACCOUNT  // email + password (+ note)
+  TEXT     // free-form activation text/instructions
+}
+
+enum TopupStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+//
+// Core models
+//
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  role          String   @default("USER") // USER | ADMIN
+  walletBalance Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  topups        Topup[]
+  orders        Order[]
+  txs           WalletTransaction[]
+}
+
+model Product {
+  id           String           @id @default(cuid())
+  title        String
+  slug         String           @unique
+  price        Int              // base/fallback price if variants absent
+  deliveryType DeliveryType
+  active       Boolean          @default(true)
+  description  String?
+  createdAt    DateTime         @default(now())
+  category     String?          // e.g. "VPN", "Streaming", "Design", etc.
+
+  // Variants under this product (e.g., 1 month, 6 months)
+  variants     ProductVariant[]
+
+  // Legacy stock (kept for compatibility; not used once variants are present)
+  stock        StockItem[]
+}
+
+model ProductVariant {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+
+  title      String             // e.g., "1 month", "6 months"
+  months     Int?               // optional metadata
+  price      Int                // price for this variant
+  active     Boolean  @default(true)
+  createdAt  DateTime  @default(now())
+
+  // Stock specific to this variant
+  stock      StockItem[]
+}
+
+model StockItem {
+  id           String           @id @default(cuid())
+
+  // Always link to the parent product
+  productId    String
+  product      Product          @relation(fields: [productId], references: [id])
+
+  // Optional link to a specific variant (recommended for new data)
+  variantId    String?
+  variant      ProductVariant?  @relation(fields: [variantId], references: [id])
+
+  // Delivery payload
+  code         String?
+  email        String?
+  password     String?
+  note         String?
+  text         String?
+
+  // Allocation state
+  allocated     Boolean   @default(false)
+  allocatedToId String?
+  allocatedAt   DateTime?
+}
+
+model Topup {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  amount    Int
+  method    String
+  reference String?
+  status    TopupStatus @default(PENDING)
+  reason    String?
+  createdAt DateTime    @default(now())
+}
+
+model Order {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id])
+  productId    String       // references the base product (variant info is baked into title)
+  productTitle String
+  deliveryType DeliveryType
+  createdAt    DateTime     @default(now())
+
+  items        OrderItem[]
+}
+
+model OrderItem {
+  id       String  @id @default(cuid())
+  orderId  String
+  order    Order   @relation(fields: [orderId], references: [id])
+
+  code     String?
+  email    String?
+  password String?
+  note     String?
+  text     String?
+}
+
+model WalletTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  amount    Int
+  reason    String?
+  createdAt DateTime @default(now())
+}

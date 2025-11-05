@@ -1,0 +1,5 @@
+[
+  { "id": "1", "title": "Netflix Premium", "slug": "netflix-premium", "price": 12000, "deliveryType": "ACCOUNT", "images": ["/placeholder.png"] },
+  { "id": "2", "title": "VPN 30 Days", "slug": "vpn-30-days", "price": 6000, "deliveryType": "CODE", "images": ["/placeholder.png"] },
+  { "id": "3", "title": "Canva Pro 1 Month", "slug": "canva-pro-1m", "price": 9000, "deliveryType": "ACCOUNT", "images": ["/placeholder.png"] }
+]

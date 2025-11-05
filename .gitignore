@@ -1,0 +1,21 @@
+# Dependencies & builds
+node_modules/
+.next/
+out/
+dist/
+
+# Env & local stuff
+.env
+.env.local
+.env.*.local
+*.log
+
+# Prisma
+prisma/*.db-journal
+prisma/dev.db
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
